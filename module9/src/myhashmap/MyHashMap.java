@@ -1,7 +1,9 @@
 package myhashmap;
 
+import java.util.Arrays;
+
 public class MyHashMap<K, V>{
-//    Написати свій клас MyHashMap як аналог класу HashMap.
+    //    Написати свій клас MyHashMap як аналог класу HashMap.
 //    Потрібно робити за допомогою однозв'язної Node.
 //    Не може зберігати дві ноди з однаковими ключами.
 //
@@ -15,10 +17,13 @@ public class MyHashMap<K, V>{
     private int nodeCounter;
     private Node<K, V> firstNode;
     private Node<K, V> nextNode;
-    private Node<K, V> prevNode;
+
+    private Node<K, V>[] nodeArray;
+    private int capacity = 10;
 
     public MyHashMap() {
         this.nodeCounter = 0;
+        nodeArray = new Node[capacity];
     }
 
     private static class Node<K, V> {
@@ -39,23 +44,24 @@ public class MyHashMap<K, V>{
     public void put(K key, V value){
         if (nodeCounter == 0) {
             firstNode = new Node(key, value);
+            nodeArray[0] = firstNode;
             nodeCounter++;
-        }
-        if (nodeCounter == 1){
-            if (key == firstNode.key) firstNode.value = value;
-            else {
-                prevNode = new Node<K, V>(key, value, null);
-                nodeCounter++;
-                firstNode.next = prevNode;
-            }
         }
         if (getNode(key) != null) {
             getNode(key).value = value;
         }
         else {
+            if (nodeCounter >= capacity) {
+                capacity = capacity + capacity/2;
+                Node<K, V>[] tempArray = new Node[capacity];
+                for (int i = 0; i < nodeCounter; i++){
+                    tempArray[i] = nodeArray[i];
+                }
+                nodeArray = Arrays.copyOf(tempArray, tempArray.length);
+            }
             nextNode = new Node<K, V>(key, value, null);
-            prevNode.next = nextNode;
-            prevNode = nextNode;
+            nodeArray[nodeCounter - 1].next = nextNode;
+            nodeArray[nodeCounter] = nextNode;
             nodeCounter++;
         }
     }
@@ -64,24 +70,22 @@ public class MyHashMap<K, V>{
         if (getNode(key) == null) {
             throw new NullPointerException("Key not found!");
         }
-        if (key == firstNode.key){
-            firstNode = firstNode.next;
-        }
-        else {
-            Node<K, V> prevNode = firstNode;
-            Node<K, V> currentNode = firstNode;
-            for (int i = 0; i < nodeCounter; i++) {
-                if (currentNode.key == key) prevNode.next = currentNode.next;
-                prevNode = currentNode;
-                currentNode = currentNode.next;
+        Node<K, V> currentNode;
+        for (int i = 0; i < nodeCounter; i++) {
+            currentNode = nodeArray[i];
+            if (currentNode.key == key) {
+                for (int j = i; j < nodeCounter - 1; j++) {
+                    nodeArray[j] = nodeArray[j + 1];
+                }
+                nodeArray[nodeCounter - 1] = null;
+                nodeCounter--;
             }
         }
-        nodeCounter--;
     }
 
     public void clear() {
         this.nodeCounter = 0;
-        this.firstNode = null;
+        this.nodeArray[0] = null;
     }
 
     public int size() {
@@ -96,10 +100,10 @@ public class MyHashMap<K, V>{
     }
 
     private Node<K, V> getNode(K key) {
-        Node<K, V> currentNode = firstNode;
+        Node<K, V> currentNode;
         for (int i = 0; i < nodeCounter; i++) {
+            currentNode = nodeArray[i];
             if (currentNode.key == key) return currentNode;
-            currentNode = currentNode.next;
         }
         return null;
     }
