@@ -1,0 +1,6 @@
+name age
+alice 21
+ryan 30
+dimon 33
+stas 12
+alexey 24
